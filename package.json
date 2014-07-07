@@ -1,0 +1,14 @@
+{
+  "name": "piphone",
+  "main": "piphone.js",
+  "description": "listen for gpio events from a rotary phone",
+  "version": "0.0.1",
+  "repository": { "type": "git",
+                  "url": "https://github.com/steven-gardiner/piphone.git"
+                },
+  "bugs": { "url": "https://github.com/steven-gardiner/piphone/issues" },
+  "license": "MIT", 
+  "dependencies": {
+    "gpiobutton": "*"
+  }
+}

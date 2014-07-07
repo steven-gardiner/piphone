@@ -1,0 +1,1 @@
+@reboot /root/node_modules/piphone/piphone.js
