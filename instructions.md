@@ -77,15 +77,27 @@ You should see some blinking lights on the Pi
 
 ## Connect to the Pi
 
-    linux$ ssh root@alarmpi.local # will prompt for password
+    linux$ ssh root@alarmpi.local # will prompt for password 
+
+default password is "root" I change the password for additional
+security but if it's never connected to a network it's not clear how
+big of a deal that it.
 
 ### Update arch code
 
     alarmpi# pacman -Syu
 
+This will prompt you to continue by pressing "y" or enter.  Then it
+will download and install several updates which will take some time.
+
 ### Install required software
 
     alarmpi# pacman -S nodejs rsync parallel mpc mpd espeak alsa-utils git
+    alarmpi# mkdir -p /var/lib/mpd/music
+
+### Place music in mpd music directory
+
+    linux$ rsync -av /path/to/music/* root@alarmpi.local:/var/lib/mpd/music/
 
 ### Install the piphone package
 
@@ -106,16 +118,12 @@ You should see some blinking lights on the Pi
 
 ### Configure mpd 
 
-    alarmpi# ln ~/node_modules/piphone/mpd.conf /etc/mpd.conf
-    alarmpi# mkdir -p /var/lib/mpd/music
+    alarmpi# ln -f ~/node_modules/piphone/mpd.conf /etc/mpd.conf
     alarmpi# systemctl enable mpd
     alarmpi# systemctl start mpd
     alarmpi# mpc random on
     alarmpi# mpc single on
 
-### Place music in mpd music directory
-
-    linux$ rsync -av /path/to/music/* root@alarmpi.local:/var/lib/mpd/music/
 
 ### Update mpd playlist
 
