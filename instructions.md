@@ -83,27 +83,21 @@ default password is "root" I change the password for additional
 security but if it's never connected to a network it's not clear how
 big of a deal that it.
 
-### Update arch code
+### Update arch code and install required software
 
-    alarmpi# pacman -Syu
+    alarmpi# pacman -Syu nodejs rsync parallel mpc mpd espeak alsa-utils git
 
 This will prompt you to continue by pressing "y" or enter.  Then it
 will download and install several updates which will take some time.
 
-### Install required software
-
-    alarmpi# pacman -S nodejs rsync parallel mpc mpd espeak alsa-utils git
-    alarmpi# mkdir -p /var/lib/mpd/music
-
 ### Place music in mpd music directory
 
+    alarmpi# mkdir -p /var/lib/mpd/music
     linux$ rsync -av /path/to/music/* root@alarmpi.local:/var/lib/mpd/music/
 
 ### Install the piphone package
 
-    alarmpi# npm install git://github.com/steven-gardiner/piphone.git
-    alarmpi# ln ~/node_modules/piphone/tts.js /usr/local/bin/tts
-    alarmpi# ln ~/node_modules/piphone/mpc_query.sh /usr/local/bin/mpc_query
+    alarmpi# npm install -g git://github.com/steven-gardiner/piphone.git
 
 ### optionally configure asound for USB audio adapter
 
@@ -118,22 +112,15 @@ will download and install several updates which will take some time.
 
 ### Configure mpd 
 
-    alarmpi# ln -f ~/node_modules/piphone/mpd.conf /etc/mpd.conf
-    alarmpi# systemctl enable mpd
-    alarmpi# systemctl start mpd
-    alarmpi# mpc random on
-    alarmpi# mpc single on
-
+    alarmpi# bash ~/node_modules/piphone/config_mpd.sh
 
 ### Update mpd playlist
 
-    alarmpi# mpc --wait update 
-    alarmpi# mpc --wait clear
-    alarmpi# mpc listall | mpc add
+    alarmpi# refresh_mpd
 
 ### configure piphone listeners to run at startup
 
-    alarmpi# cat ~/node_modules/*/crontab.txt | crontab -
+    alarmpi# bash ~/node_modules/piphone/install_crontab.sh
 
 ### reboot
 
