@@ -18,7 +18,7 @@ substitute any piece.
 1. [USB MicroB Male Plug](http://www.adafruit.com/products/1390)
 1. [Polycarbonate Sheet](http://www.homedepot.com/p/LEXAN-10-in-x-8-in-Polycarbonate-Sheet-31-GE-XL-1/202090134?N=5yc1vZbrdg)
 
-# Assmebly
+# Assembly
 
 ## Cut the polycarbonate sheet
 
@@ -79,7 +79,10 @@ You should see some blinking lights on the Pi
 
     linux$ ssh root@alarmpi.local # will prompt for password 
 
-default password is "root" I change the password for additional
+Since the Pi is not connected to a monitor, I connect to it remotely
+with `ssh`
+
+The default password is "root" I change the password for additional
 security but if it's never connected to a network it's not clear how
 big of a deal that it.
 
@@ -95,6 +98,11 @@ will download and install several updates which will take some time.
     alarmpi# mkdir -p /var/lib/mpd/music
     linux$ rsync -av /path/to/music/* root@alarmpi.local:/var/lib/mpd/music/
 
+I wanted to load the Pi with some MP3s.  This also takes a while, so I
+start it on the linux box while I run the remaining commands (this
+command requires the `rsync` software installed above so we can't
+start it any sooner).
+
 ### Install the piphone package
 
     alarmpi# npm install -g git://github.com/steven-gardiner/piphone.git
@@ -105,31 +113,43 @@ will download and install several updates which will take some time.
 
     alarmpi# ln ~/node_modules/piphone/asound.conf /etc/asound.conf
 
+I use the USB audio adapter listed above, so I need this.
+
 ### optionally place sample MP3s for mpd
 
     alarmpi# mkdir -p /var/lib/mpd/music/samples
     alarmpi# (cd /var/lib/mpd/music/samples; bash ~/node_modules/piphone/samples.sh)
 
+If you don't have some music in mind, this will download some Creative
+Commons samples so you can try things out.
+
 ### Configure mpd 
 
     alarmpi# bash ~/node_modules/piphone/config_mpd.sh
+
+You only have to do this once and for all now.
 
 ### Update mpd playlist
 
     alarmpi# refresh_mpd
 
+You'll need to repeat this command anytime you change the collection
+of music on the Pi.
+
 ### configure piphone listeners to run at startup
 
     alarmpi# bash ~/node_modules/piphone/install_crontab.sh
 
-### reboot
+This command makes it so the Pi will listen for input from the phone's
+devices (hook and dial) whenever it starts up.
+
+### shutdown
 
 Before rebooting, you may disconnect the network cable; you should not
 need it again.
 
 Also, you can connect the jumpers to the GPIO pins.
 
-    alarmpi# reboot
-
+    alarmpi# halt
 
 
