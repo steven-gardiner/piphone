@@ -138,7 +138,7 @@ process.on('tts', function(spec) {
 
 process.on('mpcq', function(spec) {
     process.emit('tts', {text:spec.query});
-    var mpc = piphone.mods.cp.exec(['/usr/local/bin/mpc_query',spec.query.join(".*")].concat([
+    var mpc = piphone.mods.cp.exec(['/usr/bin/mpc_query',spec.query.join(".*")].concat([
       '|',
       'xargs mpc play'
     ]).join(" "), function(err,stdout,stderr) {
