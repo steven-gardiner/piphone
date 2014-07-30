@@ -117,6 +117,9 @@ piphone.rotary.on('multipress', function(spec) {
       process.emit("mpcq", {query:['susanna','tanyas']});
       break;
     case 10:
+      piphone.mods.cp.exec('tts puff puff paper', function(err, stdout, stderr) {    
+        console.error("SOLONG: %j", {err:err,stdout:stdout,stderr:stderr});    
+      });
       process.emit("volume", {volume:100});
       process.emit("mpcq", {query:['puff']});
       break;
