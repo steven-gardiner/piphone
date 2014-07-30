@@ -31,6 +31,10 @@ if (false) {
 
   tts.procs.espeak.stdout.pipe(tts.procs.aplay.stdin);
   tts.procs.espeak.stderr.pipe(process.stderr);
+
+  tts.procs.aplay.on('exit', function() {
+    process.exit();
+  });
 }
 
 tts.procs.espeak.stdout.on('_end', function() {
