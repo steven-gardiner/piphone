@@ -53,11 +53,14 @@ process.on('shutdown_request', function() {
   piphone.mods.cp.exec('mpc stop', function(err, stdout, stderr) {    
     console.error("STOP: %j", {err:err,stdout:stdout,stderr:stderr});    
   });
+  piphone.mods.cp.exec('tts goodbye cruel world', function(err, stdout, stderr) {    
+    console.error("SOLONG: %j", {err:err,stdout:stdout,stderr:stderr});    
+  });
   setTimeout(function() {
     piphone.mods.cp.exec('shutdown -h now', function(err, stdout, stderr) {    
       console.error("SHUTDOWN: %j", {err:err,stdout:stdout,stderr:stderr});    
     });    
-  }, 1000);
+  }, 5000);
 });
 
 piphone.dial.on('buttondown', function() {
