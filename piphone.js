@@ -117,11 +117,7 @@ piphone.rotary.on('multipress', function(spec) {
       process.emit("mpcq", {query:['susanna','tanyas']});
       break;
     case 10:
-      var tts = piphone.mods.cp.exec('/usr/bin/tts');
-      tts.stdout.pipe(process.stdout);
-      tts.stderr.pipe(process.stderr);
-      tts.stdin.write('puff puff paper\n');
-      tts.stdin.end();
+      process.emit("tts", {text:['puff puff paper']});
       process.emit("volume", {volume:100});
       process.emit("mpcq", {query:['puff']});
       break;
@@ -136,9 +132,16 @@ piphone.rotary.on('buttonpress', function(spec) {
   piphone.rotary.emit('multipress', spec);
 });
 
-
+process.on('tts', function(spec) {
+  var tts = piphone.mods.cp.exec('/usr/bin/tts');
+  tts.stdout.pipe(process.stdout);
+  tts.stderr.pipe(process.stderr);
+  tts.stdin.write(spec.text.concat(['\n']).join(" "));;
+  tts.stdin.end();
+});
 
 process.on('mpcq', function(spec) {
+    process.emit('tts', {text:spec.query});
     var mpc = piphone.mods.cp.exec(['/usr/local/bin/mpc_query',spec.query.join(".*")].concat([
       '|',
       'xargs mpc play'
