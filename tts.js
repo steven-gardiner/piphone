@@ -29,7 +29,7 @@ if (false) {
 } else {
   tts.procs.aplay = tts.mods.cp.spawn('aplay', []);
 
-  tts.procs.espeak.stdout.pipe(tts.procs.aplay);
+  tts.procs.espeak.stdout.pipe(tts.procs.aplay.stdin);
   tts.procs.espeak.stderr.pipe(process.stderr);
 }
 
