@@ -10,13 +10,28 @@ tts.procs = {}
 //tts.procs.espeak = tts.mods.cp.spawn('espeak', ['-w', '/tmp/utter.wav', '--stdin']);
 tts.procs.espeak = tts.mods.cp.spawn('espeak', ['--stdout', '--stdin']);
 
-tts.procs.lame = tts.mods.cp.spawn('lame', ['-', '/tmp/utter.mp3']);
+if (false) {
+  tts.procs.lame = tts.mods.cp.spawn('lame', ['-', '/tmp/utter.mp3']);
 
-tts.procs.espeak.stdout.pipe(tts.procs.lame.stdin);
-tts.procs.espeak.stderr.pipe(process.stderr);
+  tts.procs.espeak.stdout.pipe(tts.procs.lame.stdin);
+  tts.procs.espeak.stderr.pipe(process.stderr);
 
-tts.procs.lame.stdout.pipe(process.stderr);
-tts.procs.lame.stderr.pipe(process.stderr);
+  tts.procs.lame.stdout.pipe(process.stderr);
+  tts.procs.lame.stderr.pipe(process.stderr);
+
+  tts.procs.lame.stdout.on('end', function() {
+    tts.procs.play = tts.mods.cp.spawn('mpg123', ['/tmp/utter.mp3']);
+      
+    tts.procs.play.on('exit', function() {
+      process.exit();
+    });
+  });
+} else {
+  tts.procs.aplay = tts.mods.cp.spawn('aplay', []);
+
+  tts.procs.espeak.stdout.pipe(tts.procs.aplay);
+  tts.procs.espeak.stderr.pipe(process.stderr);
+}
 
 tts.procs.espeak.stdout.on('_end', function() {
   tts.procs.aplay = tts.mods.cp.spawn('aplay', ['/tmp/utter.wav']);
@@ -26,13 +41,6 @@ tts.procs.espeak.stdout.on('_end', function() {
   });
 });
 
-tts.procs.lame.stdout.on('end', function() {
-  tts.procs.play = tts.mods.cp.spawn('mpg123', ['/tmp/utter.mp3']);
-
-  tts.procs.play.on('exit', function() {
-    process.exit();
-  });
-});
 
 //process.stdin.pipe(tts.procs.espeak.stdin);
 
