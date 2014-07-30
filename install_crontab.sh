@@ -1,2 +1,2 @@
- (crontab -l ; cat ~/node_modules/piphone/crontab.txt) | sort -u | crontab -
+ (crontab -l ; cat /usr/lib/node_modules/piphone/crontab.txt) | sort -u | crontab -
 
