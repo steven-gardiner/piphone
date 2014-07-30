@@ -53,14 +53,12 @@ process.on('shutdown_request', function() {
   piphone.mods.cp.exec('mpc stop', function(err, stdout, stderr) {    
     console.error("STOP: %j", {err:err,stdout:stdout,stderr:stderr});    
   });
-  piphone.mods.cp.exec('tts goodbye cruel world', function(err, stdout, stderr) {    
-    console.error("SOLONG: %j", {err:err,stdout:stdout,stderr:stderr});    
-  });
+  process.emit("tts", {text:['goodbye cruel world']});
   setTimeout(function() {
     piphone.mods.cp.exec('shutdown -h now', function(err, stdout, stderr) {    
       console.error("SHUTDOWN: %j", {err:err,stdout:stdout,stderr:stderr});    
     });    
-  }, 5000);
+  }, 10000);
 });
 
 piphone.dial.on('buttondown', function() {
@@ -117,13 +115,11 @@ piphone.rotary.on('multipress', function(spec) {
       process.emit("mpcq", {query:['susanna','tanyas']});
       break;
     case 10:
-      process.emit("tts", {text:['puff puff paper']});
       process.emit("volume", {volume:100});
       process.emit("mpcq", {query:['puff']});
       break;
     case 11:
-      var tts = piphone.mods.cp.exec('/usr/local/bin/tts');
-      tts.stdin.write("how much wood would a wood chuck chuck if a woodchuck would chuck wood?\n");
+      process.emit("tts", {text:['how much wood would a wood chuck chuck if a woodchuck would chuck wood?']});
       tts.stdin.end();
       break;
   }
