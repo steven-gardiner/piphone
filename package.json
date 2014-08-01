@@ -3,7 +3,7 @@
   "main": "piphone.js",
   "description": "listen for gpio events from a rotary phone",
   "version": "0.0.1",
-  "bin": { "tts": "./tts.js",
+  "bin": { "tts": "./tts.sh",
            "mpc_query": "./mpc_query.sh",
            "refresh_mpd": "./refresh_mpd.sh" },
   "repository": { "type": "git",
