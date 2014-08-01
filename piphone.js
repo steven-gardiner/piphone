@@ -22,14 +22,18 @@ piphone.rotary.on('multipress', function(spec) {
   }
 
   var code = piphone.code.curr.join("");
-  //console.error("CODE: %j", piphone.code.curr);
+  //console.error("CODE: %j %s", piphone.code.curr, code);
 
   switch (code) {
     case "1178":
       process.emit('shutdown_request');
       break;
+    case "1165":
+      process.emit('audible_status');
+      break;
     case "11": 
       piphone.rotary.code = true;
+      process.emit('tts', {text:['okay','okay']});
       break;
   }
 
@@ -75,8 +79,9 @@ piphone.hook.on('longpress', function() {
 });
 
 piphone.rotary.on('multipress', function(spec) {
-  console.error("ROTARY: " + spec.count);
+  //console.error("ROTARY: " + spec.count);
   if (piphone.rotary.code) { return; }
+  //console.error("ROTARY! " + spec.count);
   switch (spec.count) {
     case 1:
       process.emit("volume", {volume:60});
@@ -129,20 +134,29 @@ piphone.rotary.on('buttonpress', function(spec) {
 });
 
 process.on('tts', function(spec) {
-  var tts = piphone.mods.cp.exec('/usr/bin/tts');
+  var tts = piphone.mods.cp.spawn('/usr/bin/tts', spec.text);
   tts.stdout.pipe(process.stdout);
   tts.stderr.pipe(process.stderr);
-  tts.stdin.write(spec.text.concat(['\n']).join(" "));;
-  tts.stdin.end();
+  //tts.stdin.write(spec.text.concat(['\n']).join(" "));;
+  //tts.stdin.end();
+});
+
+process.on('audible_status', function(spec) {
+  var stat = piphone.mods.cp.spawn('bash', ['-c', 'mpc | head -1 | tts']);
+
+  stat.stdout.pipe(process.stderr);
+  stat.stderr.pipe(process.stderr);
+  //tts.stdin.write(spec.text.concat(['\n']).join(" "));;
+  //tts.stdin.end();
 });
 
 process.on('mpcq', function(spec) {
-    process.emit('tts', {text:spec.query});
+    //process.emit('tts', {text:spec.query});
     var mpc = piphone.mods.cp.exec(['/usr/bin/mpc_query',spec.query.join(".*")].concat([
       '|',
       'xargs mpc play'
     ]).join(" "), function(err,stdout,stderr) {
-    console.error("DEMAND: %j", {err:err,stdout:stdout,stderr:stderr});    
+    //console.error("DEMAND: %j", {err:err,stdout:stdout,stderr:stderr});    
   });
 });
 process.on('mpc', function(spec) {
