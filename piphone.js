@@ -7,7 +7,7 @@ piphone.mods.gpiobutton = require('gpiobutton');
 piphone.mods.cp = require('child_process');
 
 piphone.hook = new piphone.mods.gpiobutton.button({name:'hook', gpiono:22, DOWN:1});
-piphone.dial = new piphone.mods.gpiobutton.button({name:'dial', gpiono:27});
+piphone.dial = new piphone.mods.gpiobutton.button({name:'dial', gpiono:27, longTimeout: 3000});
 piphone.rotary = new piphone.mods.gpiobutton.button({name:'rotary', gpiono:17, interval:30, DOWN:1});
 piphone.onoff = new piphone.mods.gpiobutton.button({name:'switch', gpiono: 18});
 
@@ -15,20 +15,44 @@ piphone.code = {};
 piphone.code.curr = [];
 
 piphone.rotary.on('multipress', function(spec) {
-  piphone.code.curr.push(spec.count);
+  piphone.code.curr.push(spec.count % 10);
 
   if (piphone.code.unlisten) {
     clearTimeout(piphone.code.unlisten);
   }
 
   var code = piphone.code.curr.join("");
-  //console.error("CODE: %j %s", piphone.code.curr, code);
+  console.error("CODE: %j %s", piphone.code.curr, code);
 
   switch (code) {
     case "1178":
       process.emit('shutdown_request');
       break;
     case "1165":
+      process.emit('audible_trackid');
+      break;
+    case "1166":
+      process.emit('mpc', {cmd:['repeat', 'on']});
+      process.emit('audible_status');
+      break;
+    case "1186":
+      process.emit('mpc', {cmd:['repeat', 'off']});
+      process.emit('audible_status');
+      break;
+    case "1160":
+      process.emit('mpc', {cmd:['single', 'on']});
+      process.emit('audible_status');
+      break;
+    case "1180":
+      process.emit('mpc', {cmd:['single', 'off']});
+      process.emit('audible_status');
+      break;
+    case "1161":
+      process.emit('mpc', {cmd:['random', 'on']});
+      process.emit('audible_status');
+      break;
+    case "1181":
+      process.emit('mpc', {cmd:['random', 'off']});
       process.emit('audible_status');
       break;
     case "11": 
@@ -70,6 +94,18 @@ piphone.dial.on('buttondown', function() {
 });
 piphone.dial.on('buttonup', function() {
   piphone.rotary.deactivate();
+});
+
+piphone.dial.on('longpress', function() {
+  //process.emit('tts', {text:['okay','okay']}); 
+});
+
+piphone.dial.on('multipress', function() {
+  //process.emit('tts', {text:['what', 'what']}); 
+});
+
+piphone.hook.on('multipress', function() {
+  //process.emit('tts', {text:['what', 'what']}); 
 });
 
 piphone.hook.on('longpress', function() {
@@ -141,8 +177,17 @@ process.on('tts', function(spec) {
   //tts.stdin.end();
 });
 
+process.on('audible_trackid', function(spec) {
+  var stat = piphone.mods.cp.spawn('bash', ['-c', 'mpc current | tts']);
+
+  stat.stdout.pipe(process.stderr);
+  stat.stderr.pipe(process.stderr);
+  //tts.stdin.write(spec.text.concat(['\n']).join(" "));;
+  //tts.stdin.end();
+});
+
 process.on('audible_status', function(spec) {
-  var stat = piphone.mods.cp.spawn('bash', ['-c', 'mpc | head -1 | tts']);
+  var stat = piphone.mods.cp.spawn('bash', ['-c', 'mpc | tail -1 | tts']);
 
   stat.stdout.pipe(process.stderr);
   stat.stderr.pipe(process.stderr);
@@ -160,7 +205,7 @@ process.on('mpcq', function(spec) {
   });
 });
 process.on('mpc', function(spec) {
-  piphone.mods.cp.exec(['mpc',spec.cmd].join(" "), function(err, stdout, stderr) {    
+  piphone.mods.cp.exec(['mpc'].concat(spec.cmd).join(" "), function(err, stdout, stderr) {    
     console.error("%s: %j", spec.cmd, {err:err,stdout:stdout,stderr:stderr});    
   });
 });
