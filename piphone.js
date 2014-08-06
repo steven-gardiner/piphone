@@ -22,6 +22,14 @@ piphone.digits = {
   '0': ' ',
 };
 
+piphone.closings = [
+  "goodbye",
+  "farewell",
+  "see you later",
+  "leka nosht",
+  "ciao"
+];
+
 piphone.state = {};
 piphone.state.mode = "";
 piphone.state.sofar = [];
@@ -161,12 +169,31 @@ process.on('code', function(spec) {
       process.emit('clear_code');
       process.emit('clear_recs');
       break;      
+    case "*60":
+      process.emit('mpc', {cmd:['single', 'on']});
+      process.emit('audible_status');
+      break;
+    case "*80":
+      process.emit('mpc', {cmd:['single', 'off']});
+      process.emit('audible_status');
+      break;
     case "*61":
       process.emit('mpc', {cmd:['random', 'on']});
       process.emit('audible_status');
       break;
     case "*81":
       process.emit('mpc', {cmd:['random', 'off']});
+      process.emit('audible_status');
+      break;
+    case "*65":
+      process.emit('audible_trackid');
+      break;
+    case "*66":
+      process.emit('mpc', {cmd:['repeat', 'on']});
+      process.emit('audible_status');
+      break;
+    case "*86":
+      process.emit('mpc', {cmd:['repeat', 'off']});
       process.emit('audible_status');
       break;
     case '*78':
@@ -244,7 +271,10 @@ process.on('newmode', function(spec) {
 process.on('shutdown_request', function() {
   process.emit('mpc', {cmd:['stop']});
   process.emit("tts", {text:['goodbye cruel world']});
-  setInterval(function() { process.emit("tts", {text:['goodbye']}); }, 2500);
+  setInterval(function() { 
+    var draw = Math.floor(Math.random()*piphone.closings.length);
+    process.emit("tts", {text:[piphone.closings[draw]]}); 
+  }, 2500);
   setTimeout(function() {
     piphone.mods.cp.exec('shutdown -h now', function(err, stdout, stderr) {    
       console.error("SHUTDOWN: %j", {err:err,stdout:stdout,stderr:stderr});    
