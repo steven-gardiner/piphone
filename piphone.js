@@ -5,9 +5,7 @@ var piphone = {};
 piphone.mods = {};
 piphone.mods.cp = require('child_process');
 piphone.mods.gpiobutton = require('gpiobutton');
-piphone.mods.util = require('util');
-
-piphone.format = piphone.mods.util.format;
+piphone.mods.fs = require('fs');
 
 piphone.digits = {
   '1': '.*',
@@ -161,6 +159,7 @@ process.on('code', function(spec) {
     case '-7': 
     case '-8': 
     case '-9':
+      process.emit('mpc', {cmd:['pause']});
       process.emit('mike', {id:piphone.state.sofar.pop()});
       process.emit('clear_code');
       break;      
@@ -333,6 +332,37 @@ process.on('mike', function(spec) {
   if (piphone.mike) { return; }
   var mikeid = spec.id;
   var mikefile = [process.env.HOME, 'tmp', [mikeid,'wav'].join(".")].join('/');
+
+  piphone.mods.fs.exists(mikefile, function(exists) {
+    if (exists) {
+      var play = piphone.cp.spawn('aplay', [mikefile]);
+      play.stdout.pipe(process.stdout);
+      play.stderr.pipe(process.stderr);
+      return;
+    }
+
+    process.emit('effect', {name: 'beep'});
+    var cmd = [
+      //'(',
+      'exec',
+      'arecord',
+      '-Dplug:usb',
+      '--format=S16_LE',
+      '--duration=120',
+      mikefile
+    ].join(" ");
+    piphone.mike = piphone.mods.cp.spawn('bash', ['-c', cmd]);
+    piphone.mike.stdout.pipe(process.stdout);
+    piphone.mike.stderr.pipe(process.stderr);
+    piphone.mike.on('exit', function() {
+      console.error("DROPMIKE");
+      delete piphone.mike;
+    });
+     
+  });
+
+  return;
+
   var cmd = [
       //'(',
       'aplay',
@@ -346,7 +376,7 @@ process.on('mike', function(spec) {
       '--duration=120',
       mikefile
       ].join(" ");
-    console.error("MIKE: %s", cmd);
+  console.error("MIKE: %s", cmd);
   piphone.mike = piphone.mods.cp.spawn('bash', ['-c', cmd]);
   piphone.mike.stdout.pipe(process.stdout);
   piphone.mike.stderr.pipe(process.stderr);
