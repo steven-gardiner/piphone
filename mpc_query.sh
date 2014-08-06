@@ -7,7 +7,6 @@ MPC="mpc"
 #echo 2 $2 
 
 
-${MPC} --format "%position% %title% %artist% %title% %file" playlist | 
-grep -i $1 |
-head -1 | 
+${MPC} --format "%position% %title% %artist% %title% %file%" playlist | 
+egrep -i $1 |
 cut -d ' ' -f1

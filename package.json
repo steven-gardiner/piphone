@@ -2,7 +2,7 @@
   "name": "piphone",
   "main": "piphone.js",
   "description": "listen for gpio events from a rotary phone",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "bin": { "tts": "./tts.sh",
            "mpc_query": "./mpc_query.sh",
            "refresh_mpd": "./refresh_mpd.sh" },

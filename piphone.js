@@ -3,170 +3,264 @@
 var piphone = {};
 
 piphone.mods = {};
-piphone.mods.gpiobutton = require('gpiobutton');
 piphone.mods.cp = require('child_process');
+piphone.mods.gpiobutton = require('gpiobutton');
+piphone.mods.util = require('util');
 
-piphone.hook = new piphone.mods.gpiobutton.button({name:'hook', gpiono:22, DOWN:1});
-piphone.dial = new piphone.mods.gpiobutton.button({name:'dial', gpiono:27, longTimeout: 3000});
-piphone.rotary = new piphone.mods.gpiobutton.button({name:'rotary', gpiono:17, interval:30, DOWN:1});
-piphone.onoff = new piphone.mods.gpiobutton.button({name:'switch', gpiono: 18});
+piphone.format = piphone.mods.util.format;
 
-piphone.code = {};
-piphone.code.curr = [];
+piphone.digits = {
+  '1': '.*',
+  '2': '[abc]',
+  '3': '[def]',
+  '4': '[ghi]',
+  '5': '[jkl]',
+  '6': '[mno]',
+  '7': '[pqrs]',
+  '8': '[tuv]',
+  '9': '[wxyz]',
+  '0': ' ',
+};
 
-piphone.rotary.on('multipress', function(spec) {
-  piphone.code.curr.push(spec.count % 10);
+piphone.state = {};
+piphone.state.mode = "";
+piphone.state.sofar = [];
 
-  if (piphone.code.unlisten) {
-    clearTimeout(piphone.code.unlisten);
+piphone.effects = {
+  beep: 'Answering_Machine_Beep-Mike_Koenig-SoundBible.com-1804176620.wav',
+  blip: 'Robot_blip-Marianne_Gagnon-SoundBible.com-120342607.wav',
+  tone: 'Short_Dial_Tone-Mike_Koenig-SoundBible.com-1911037576.wav',
+  modem: 'Dial_Up_Modem-ezwa-SoundBible.com-909377495.wav',
+  flush: 'Flushing_The_Toilet-Grzegorz_Adam_Hankie-SoundBible.com-399247839.wav',
+  uhoh: 'Uh_Oh_Baby-Mike_Koenig-SoundBible.com-1858856676.wav',
+};
+
+piphone.root = require.resolve('./piphone.js').split('/').slice(0,-1).join("/");
+
+piphone.dev = {};
+piphone.dev.hook = new piphone.mods.gpiobutton.button({name:'hook', gpiono:22, DOWN:1});
+piphone.dev.dial = new piphone.mods.gpiobutton.button({name:'dial', gpiono:27, longTimeout: 2500});
+piphone.dev.rotary = new piphone.mods.gpiobutton.button({name:'rotary', gpiono:17, interval:30, DOWN:1});
+//piphone.dev.onoff = new piphone.mods.gpiobutton.button({name:'switch', gpiono: 18});
+
+piphone.dev.hook.on('buttondown', function() {
+  process.emit('clear_code');
+  if (piphone.mike) {
+    piphone.mike.kill();
+  }
+});
+piphone.dev.hook.on('longpress', function() {
+  process.emit('mpc', {cmd:['pause']});
+});
+
+piphone.dev.dial.on('longpress', function() {
+  console.log("LONG!");
+  process.emit('setmode', {from:piphone.state.mode, to:'-'});
+});
+
+piphone.dev.rotary.on('multipress', function(spec) {
+  var digit = Math.ceil(spec.count) % 10;
+  //piphone.state.sofar.push(piphone.state.mode);
+  piphone.state.sofar.push(digit);
+
+  process.emit('code');
+
+  switch (piphone.state.mode) {
+    case '-':
+      process.emit('setmode', {from:piphone.state.mode, to:''});
+      break;
+    case '*':
+      if (piphone.state.sofar.length >= 3) {
+        process.emit('setmode', {from:piphone.state.mode, to:''});
+        process.emit('clear_code');
+      }
+      break;
+    default:
+  }
+});
+piphone.dev.rotary.on('buttonpress', function(spec) {
+  piphone.dev.rotary.emit('multipress', spec);
+});
+
+process.on('code', function(spec) {
+  var code = piphone.state.sofar.join("");
+
+  console.log("CODE %j", {code:code, state:piphone.state});
+
+  if (piphone.state.sofar[0] === 0) {
+    process.emit('rotary_query', {rquery:piphone.state.sofar.slice(1)});
+    return;
   }
 
-  var code = piphone.code.curr.join("");
-  console.error("CODE: %j %s", piphone.code.curr, code);
-
   switch (code) {
-    case "1178":
-      process.emit('shutdown_request');
+    case '1': 
+      process.emit("volume", {volume:80});      
+      process.emit("mpc", {cmd:'play'});
+      piphone.state.sofar.shift();
       break;
-    case "1165":
-      process.emit('audible_trackid');
+    case '2': 
+      process.emit("volume", {volume:100});      
+      process.emit("mpc", {cmd:'play'});
+      piphone.state.sofar.shift();
       break;
-    case "1166":
-      process.emit('mpc', {cmd:['repeat', 'on']});
-      process.emit('audible_status');
+    case '3': 
+      process.emit("mpc", {cmd:'next'});
+      piphone.state.sofar.shift();
       break;
-    case "1186":
-      process.emit('mpc', {cmd:['repeat', 'off']});
-      process.emit('audible_status');
+    case '4': 
+      process.emit("mpc", {cmd:'prev'});
+      piphone.state.sofar.shift();
       break;
-    case "1160":
-      process.emit('mpc', {cmd:['single', 'on']});
-      process.emit('audible_status');
+    case '5':
+      process.emit("tts", {text:['number','5']});
+      process.emit("mpcq", {query:['guapo']});
+      piphone.state.sofar.shift();
       break;
-    case "1180":
-      process.emit('mpc', {cmd:['single', 'off']});
-      process.emit('audible_status');
+    case '6':
+      process.emit("tts", {text:['number','6']});
+      process.emit("mpcq", {query:['belafonte','matilda']});
+      piphone.state.sofar.shift();
       break;
-    case "1161":
+    case '7':
+      process.emit("tts", {text:['number','7']});
+      process.emit("mpcq", {query:['susanna','tanyas']});
+      piphone.state.sofar.shift();
+      break;
+    case '8':
+      process.emit("tts", {text:['number','8']});
+      process.emit("mpcq", {query:['puff']});
+      piphone.state.sofar.shift();
+      break;
+    case '9':
+      process.emit("tts", {text:['number','9']});
+      process.emit("mpcq", {query:['lilly']});
+      piphone.state.sofar.shift();
+      break;
+    case '-1': 
+      process.emit('clear_code');
+      process.emit('setmode', {from:piphone.state.mode, to:'*'});      
+      piphone.state.sofar.push("*");
+      break;
+    case '-2': 
+      process.emit('clear_code');
+      process.emit('setmode', {from:piphone.state.mode, to:'#'});      
+      piphone.state.sofar.push("#");
+      break;
+    case '-3': 
+    case '-4': 
+    case '-5': 
+    case '-6': 
+    case '-7': 
+    case '-8': 
+    case '-9':
+      process.emit('mike', {id:piphone.state.sofar.pop()});
+      process.emit('clear_code');
+      break;      
+    case '-0':
+      process.emit('setmode', {from:piphone.state.mode, to:''});      
+      process.emit('clear_code');
+      process.emit('clear_recs');
+      break;      
+    case "*61":
       process.emit('mpc', {cmd:['random', 'on']});
       process.emit('audible_status');
       break;
-    case "1181":
+    case "*81":
       process.emit('mpc', {cmd:['random', 'off']});
       process.emit('audible_status');
       break;
-    case "11": 
-      piphone.rotary.code = true;
-      process.emit('tts', {text:['okay','okay']});
+    case '*78':
+      process.emit('shutdown_request');
       break;
   }
-
-  piphone.code.unlisten = setTimeout(function() {
-    //console.error("UNLISTEN");
-    piphone.code.curr = [];
-    piphone.rotary.code = false;
-    delete piphone.code.unlisten;
-  }, 4000);
 });
 
-piphone.onoff.on('buttonup', function() {
-  piphone.onoff.enabled = true;
+process.on('rotary_query', function(spec) {
+  if (spec.rquery.length === 0) {
+    return;
+  }
+
+  spec.regex = spec.rquery.map(function(digit) { return piphone.digits[digit]; }).join('');
+  console.error("RQUERY %j", spec);
+
+  var mpcq = piphone.mods.cp.exec(['mpc_query', spec.regex].join(' '), function(code, out, err) {
+
+    if (out.length === 0) {
+      process.emit('effect', {name:'beep'});
+      return;
+    }
+
+    var lines = out.split(/\n/);
+    console.error("MPCQ %j", {code:code,out:out.slice(0,100),err:err,lines:lines.slice(0,10)});
+    if (lines.length === 2) {
+      process.emit('mpc', {cmd:['play',lines[0]]});
+      return;
+    }
+
+    //process.emit('effect', {name:'uhoh'});
+    //process.emit('tts', {text:[lines.length]});
+    
+  });
 });
-piphone.onoff.on('longpress', function() {
-  if (! piphone.onoff.enabled) { return; }
-  process.emit('shutdown_request');
+
+process.on('clear_code', function(spec) {
+  piphone.state.sofar = [];
+});
+
+process.on('clear_recs', function(spec) {
+  var rm = piphone.mods.cp.spawn('bash', ['-c',['rm',[process.env.HOME,'tmp','?.wav'].join('/')].join(' ')]);
+  rm.stdout.pipe(process.stdout);
+  rm.stderr.pipe(process.stderr);
+  rm.on('exit', function() {
+    process.emit('effect', {name:'flush'});
+  });
+});
+
+process.on('setmode', function(spec) {
+  var oldmode = piphone.state.mode;
+  piphone.state.mode = spec.to;
+  process.emit('newmode', spec);
+});
+
+process.on('newmode', function(spec) {
+  if (spec.to === '-') {
+    process.emit('effect', {name:'blip'});
+    piphone.state.sofar.push('-');
+  }
+});
+process.on('newmode', function(spec) {
+  if (spec.to === '*') {
+    process.emit('effect', {name:'modem'});
+    //piphone.state.sofar.push('*');
+  }
+});
+process.on('newmode', function(spec) {
+  if (spec.to === '#') {
+    process.emit('effect', {name:'tone'});
+    //piphone.state.sofar.push('#');
+  }
 });
 
 process.on('shutdown_request', function() {
-  piphone.mods.cp.exec('mpc stop', function(err, stdout, stderr) {    
-    console.error("STOP: %j", {err:err,stdout:stdout,stderr:stderr});    
-  });
+  process.emit('mpc', {cmd:['stop']});
   process.emit("tts", {text:['goodbye cruel world']});
+  setInterval(function() { process.emit("tts", {text:['goodbye']}); }, 2500);
   setTimeout(function() {
     piphone.mods.cp.exec('shutdown -h now', function(err, stdout, stderr) {    
       console.error("SHUTDOWN: %j", {err:err,stdout:stdout,stderr:stderr});    
     });    
-  }, 10000);
+  }, 6000);
 });
 
-piphone.dial.on('buttondown', function() {
-  piphone.rotary.activate();
-});
-piphone.dial.on('buttonup', function() {
-  piphone.rotary.deactivate();
-});
-
-piphone.dial.on('longpress', function() {
-  //process.emit('tts', {text:['okay','okay']}); 
-});
-
-piphone.dial.on('multipress', function() {
-  //process.emit('tts', {text:['what', 'what']}); 
-});
-
-piphone.hook.on('multipress', function() {
-  //process.emit('tts', {text:['what', 'what']}); 
-});
-
-piphone.hook.on('longpress', function() {
-  piphone.mods.cp.exec('mpc pause', function(err, stdout, stderr) {    
-    console.error("STOP: %j", {err:err,stdout:stdout,stderr:stderr});    
+process.on('mpc', function(spec) {
+  piphone.mods.cp.exec(['mpc'].concat(spec.cmd).join(" "), function(err, stdout, stderr) {    
+    console.error("%s: %j", spec.cmd, {err:err,stdout:stdout,stderr:stderr});    
   });
 });
-
-piphone.rotary.on('multipress', function(spec) {
-  //console.error("ROTARY: " + spec.count);
-  if (piphone.rotary.code) { return; }
-  //console.error("ROTARY! " + spec.count);
-  switch (spec.count) {
-    case 1:
-      process.emit("volume", {volume:60});
-      process.emit("mpc", {cmd:'play'});
-      break;
-    case 2:
-      process.emit("volume", {volume:100});
-      process.emit("mpc", {cmd:'play'});
-      break;
-    case 3:
-      process.emit("volume", {volume:60});
-      process.emit("mpc", {cmd:'next'});
-      break;
-    case 4:
-      process.emit("volume", {volume:100});
-      process.emit("mpc", {cmd:'next'});
-      break;
-    case 5:
-      process.emit("volume", {volume:60});
-      process.emit("mpc", {cmd:'prev'});
-      break;
-    case 6:
-      process.emit("volume", {volume:100});
-      process.emit("mpc", {cmd:'prev'});
-      break;
-    case 7:
-      process.emit("volume", {volume:100});
-      process.emit("mpcq", {query:['guapo']});
-      break;
-    case 8:
-      process.emit("volume", {volume:100});
-      process.emit("mpcq", {query:['belafonte','matilda']});
-      break;
-    case 9:
-      process.emit("volume", {volume:100});
-      process.emit("mpcq", {query:['susanna','tanyas']});
-      break;
-    case 10:
-      process.emit("volume", {volume:100});
-      process.emit("mpcq", {query:['puff']});
-      break;
-    case 11:
-      process.emit("tts", {text:['how much wood would a wood chuck chuck if a woodchuck would chuck wood?']});
-      tts.stdin.end();
-      break;
-  }
-});
-piphone.rotary.on('buttonpress', function(spec) {
-  piphone.rotary.emit('multipress', spec);
+process.on('volume', function(spec) {
+  piphone.mods.cp.exec(['mpc','volume',spec.volume].join(" "), function(err, stdout, stderr) {    
+    console.error("VOL: %j", {vol:spec.volume,err:err,stdout:stdout,stderr:stderr});    
+  });
 });
 
 process.on('tts', function(spec) {
@@ -177,22 +271,42 @@ process.on('tts', function(spec) {
   //tts.stdin.end();
 });
 
-process.on('audible_trackid', function(spec) {
-  var stat = piphone.mods.cp.spawn('bash', ['-c', 'mpc current | tts']);
-
-  stat.stdout.pipe(process.stderr);
-  stat.stderr.pipe(process.stderr);
-  //tts.stdin.write(spec.text.concat(['\n']).join(" "));;
-  //tts.stdin.end();
+process.on('effect', function(spec) {
+  var name = spec.name;
+  var filename = piphone.effects[name];
+  var path = [piphone.root,'wav',filename].join("/");
+  console.error("PATH: %s -> %s %j", name, filename, path);
+  var aplay = piphone.mods.cp.spawn('aplay', [path]);
+  aplay.stdout.pipe(process.stdout);
+  aplay.stderr.pipe(process.stderr);
 });
 
-process.on('audible_status', function(spec) {
-  var stat = piphone.mods.cp.spawn('bash', ['-c', 'mpc | tail -1 | tts']);
-
-  stat.stdout.pipe(process.stderr);
-  stat.stderr.pipe(process.stderr);
-  //tts.stdin.write(spec.text.concat(['\n']).join(" "));;
-  //tts.stdin.end();
+process.on('mike', function(spec) {
+  if (piphone.mike) { return; }
+  var mikeid = spec.id;
+  var mikefile = [process.env.HOME, 'tmp', [mikeid,'wav'].join(".")].join('/');
+  var cmd = [
+      //'(',
+      'aplay',
+      mikefile,
+      //')',
+      '||',
+      'exec',
+      'arecord',
+      '-Dplug:usb',
+      '--format=S16_LE',
+      '--duration=120',
+      mikefile
+      ].join(" ");
+    console.error("MIKE: %s", cmd);
+  piphone.mike = piphone.mods.cp.spawn('bash', ['-c', cmd]);
+  piphone.mike.stdout.pipe(process.stdout);
+  piphone.mike.stderr.pipe(process.stderr);
+  piphone.mike.on('exit', function() {
+    console.error("DROPMIKE");
+    delete piphone.mike;
+  });
+                                            
 });
 
 process.on('mpcq', function(spec) {
@@ -204,13 +318,5 @@ process.on('mpcq', function(spec) {
     //console.error("DEMAND: %j", {err:err,stdout:stdout,stderr:stderr});    
   });
 });
-process.on('mpc', function(spec) {
-  piphone.mods.cp.exec(['mpc'].concat(spec.cmd).join(" "), function(err, stdout, stderr) {    
-    console.error("%s: %j", spec.cmd, {err:err,stdout:stdout,stderr:stderr});    
-  });
-});
-process.on('volume', function(spec) {
-  piphone.mods.cp.exec(['mpc','volume',spec.volume].join(" "), function(err, stdout, stderr) {    
-    console.error("VOL: %j", {vol:spec.volume,err:err,stdout:stdout,stderr:stderr});    
-  });
-});
+
+process.emit('tts', {text:['hello', 'world']});
