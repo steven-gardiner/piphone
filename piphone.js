@@ -356,6 +356,7 @@ process.on('mike', function(spec) {
     piphone.mike.stderr.pipe(process.stderr);
     piphone.mike.on('exit', function() {
       console.error("DROPMIKE");
+      process.emit('effect', {name:'tone'});
       delete piphone.mike;
     });
      
