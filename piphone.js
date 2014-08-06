@@ -335,7 +335,7 @@ process.on('mike', function(spec) {
 
   piphone.mods.fs.exists(mikefile, function(exists) {
     if (exists) {
-      var play = piphone.cp.spawn('aplay', [mikefile]);
+      var play = piphone.mods.cp.spawn('aplay', [mikefile]);
       play.stdout.pipe(process.stdout);
       play.stderr.pipe(process.stderr);
       return;
