@@ -281,6 +281,24 @@ process.on('effect', function(spec) {
   aplay.stderr.pipe(process.stderr);
 });
 
+process.on('audible_trackid', function(spec) {
+  var stat = piphone.mods.cp.spawn('bash', ['-c', 'mpc current | tts']);
+
+  stat.stdout.pipe(process.stderr);
+  stat.stderr.pipe(process.stderr);
+  //tts.stdin.write(spec.text.concat(['\n']).join(" "));;
+  //tts.stdin.end();
+});
+
+process.on('audible_status', function(spec) {
+  var stat = piphone.mods.cp.spawn('bash', ['-c', 'mpc | tail -1 | tts']);
+
+  stat.stdout.pipe(process.stderr);
+  stat.stderr.pipe(process.stderr);
+  //tts.stdin.write(spec.text.concat(['\n']).join(" "));;
+  //tts.stdin.end();
+});
+
 process.on('mike', function(spec) {
   if (piphone.mike) { return; }
   var mikeid = spec.id;
