@@ -234,7 +234,20 @@ process.on('clear_code', function(spec) {
 });
 
 process.on('clear_recs', function(spec) {
-  var rm = piphone.mods.cp.spawn('bash', ['-c',['rm',[process.env.HOME,'tmp','?.wav'].join('/')].join(' ')]);
+  var timestamp =JSON.stringify(new Date()).slice(1,-2);
+
+  var cmd = [
+             'mkdir',
+             '-p',
+             [process.env.HOME,'tmp',timestamp].join('/'),
+             '&&',
+             'mv',
+             [process.env.HOME,'tmp','?.wav'].join('/'),
+             [process.env.HOME,'tmp',timestamp].join('/'),    
+             '',
+             ].join(' ');
+  console.error("TRASH: %s", cmd);
+  var rm = piphone.mods.cp.spawn('bash', ['-c',cmd]);
   rm.stdout.pipe(process.stdout);
   rm.stderr.pipe(process.stderr);
   rm.on('exit', function() {
