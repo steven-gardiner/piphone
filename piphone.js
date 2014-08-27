@@ -45,7 +45,7 @@ piphone.root = require.resolve('./piphone.js').split('/').slice(0,-1).join("/");
 
 piphone.dev = {};
 piphone.dev.hook = new piphone.mods.gpiobutton.button({name:'hook', gpiono:22, DOWN:1});
-piphone.dev.dial = new piphone.mods.gpiobutton.button({name:'dial', gpiono:27, longTimeout: 2500});
+piphone.dev.dial = new piphone.mods.gpiobutton.button({name:'dial', gpiono:27, longTimeout: 10000});
 piphone.dev.rotary = new piphone.mods.gpiobutton.button({name:'rotary', gpiono:17, interval:30, DOWN:1});
 //piphone.dev.onoff = new piphone.mods.gpiobutton.button({name:'switch', gpiono: 18});
 
@@ -109,12 +109,24 @@ process.on('code', function(spec) {
       process.emit("mpc", {cmd:'play'});
       piphone.state.sofar.shift();
       break;
+/*
     case '3': 
       process.emit("mpc", {cmd:'next'});
       piphone.state.sofar.shift();
       break;
     case '4': 
       process.emit("mpc", {cmd:'prev'});
+      piphone.state.sofar.shift();
+      break;
+*/
+    case '3':
+      process.emit("tts", {text:['number','3']});
+      process.emit("mpcq", {query:['humpty','dumpty']});
+      piphone.state.sofar.shift();
+      break;
+    case '5':
+      process.emit("tts", {text:['number','4']});
+      process.emit("mpcq", {query:['wiggle','tooth']});
       piphone.state.sofar.shift();
       break;
     case '5':
@@ -140,6 +152,11 @@ process.on('code', function(spec) {
     case '9':
       process.emit("tts", {text:['number','9']});
       process.emit("mpcq", {query:['lilly']});
+      piphone.state.sofar.shift();
+      break;
+    case '0':
+      process.emit("tts", {text:['number','zero']});
+      process.emit("mpcq", {query:['little','bird,','little','bird']});
       piphone.state.sofar.shift();
       break;
     case '-1': 
