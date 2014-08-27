@@ -58,6 +58,13 @@ piphone.dev.hook.on('buttondown', function() {
 piphone.dev.hook.on('longpress', function() {
   process.emit('mpc', {cmd:['pause']});
 });
+piphone.dev.hook.on('buttonpress', function() {
+  process.emit("volume", {volume:100});      
+});
+piphone.dev.hook.on('multipress', function(spec) {
+  var vol = 120 - (10*(spec.count));
+  process.emit("volume", {volume:vol});      
+});
 
 piphone.dev.dial.on('longpress', function() {
   console.log("LONG!");
