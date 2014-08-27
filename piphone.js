@@ -100,13 +100,19 @@ process.on('code', function(spec) {
 
   switch (code) {
     case '1': 
-      process.emit("volume", {volume:80});      
       process.emit("mpc", {cmd:'play'});
       piphone.state.sofar.shift();
       break;
+/*
     case '2': 
       process.emit("volume", {volume:100});      
       process.emit("mpc", {cmd:'play'});
+      piphone.state.sofar.shift();
+      break;
+*/
+    case '2':
+      process.emit("tts", {text:['number','2']});
+      process.emit("mpcq", {query:['little','bird,','little','bird']});
       piphone.state.sofar.shift();
       break;
 /*
@@ -152,11 +158,6 @@ process.on('code', function(spec) {
     case '9':
       process.emit("tts", {text:['number','9']});
       process.emit("mpcq", {query:['lilly']});
-      piphone.state.sofar.shift();
-      break;
-    case '0':
-      process.emit("tts", {text:['number','zero']});
-      process.emit("mpcq", {query:['little','bird,','little','bird']});
       piphone.state.sofar.shift();
       break;
     case '-1': 
