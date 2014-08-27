@@ -44,9 +44,9 @@ piphone.effects = {
 piphone.root = require.resolve('./piphone.js').split('/').slice(0,-1).join("/");
 
 piphone.dev = {};
-piphone.dev.hook = new piphone.mods.gpiobutton.button({name:'hook', gpiono:22, DOWN:1});
+piphone.dev.hook = new piphone.mods.gpiobutton.button({name:'hook', gpiono:22, DOWN:1, interval:80});
 piphone.dev.dial = new piphone.mods.gpiobutton.button({name:'dial', gpiono:27, longTimeout: 10000});
-piphone.dev.rotary = new piphone.mods.gpiobutton.button({name:'rotary', gpiono:17, interval:30, DOWN:1});
+piphone.dev.rotary = new piphone.mods.gpiobutton.button({name:'rotary', gpiono:17, interval:20, DOWN:1});
 //piphone.dev.onoff = new piphone.mods.gpiobutton.button({name:'switch', gpiono: 18});
 
 piphone.dev.hook.on('buttondown', function() {
