@@ -124,7 +124,7 @@ process.on('code', function(spec) {
       process.emit("mpcq", {query:['humpty','dumpty']});
       piphone.state.sofar.shift();
       break;
-    case '5':
+    case '4':
       process.emit("tts", {text:['number','4']});
       process.emit("mpcq", {query:['wiggle','tooth']});
       piphone.state.sofar.shift();
